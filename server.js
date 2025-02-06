@@ -82,37 +82,29 @@ app.post("/api/users", async (req, res) => {
 // Login User
 app.post("/api/login", async (req, res) => {
   try {
-    // Extract email and password from the request body
     const { email, password } = req.body;
 
-    // Query the database for the user with the provided email
     const user = await pool.query("SELECT * FROM users WHERE email = $1", [
       email,
     ]);
 
-    // If the user is not found, return an error
     if (user.rows.length === 0) {
       return res.status(400).json({ message: "User not found" });
     }
 
-    // Check if the provided password matches the hashed password in the database
+    // *** KEY CHANGE: Use bcrypt.compare ***
     const validPassword = await bcrypt.compare(password, user.rows[0].password);
 
-    // If the password is incorrect, return an error
     if (!validPassword) {
       return res.status(400).json({ message: "Invalid credentials" });
     }
 
-    // Generate a JWT token for the authenticated user
     const token = jwt.sign({ id: user.rows[0].id }, process.env.JWT_SECRET, {
-      expiresIn: "1h", // Token expires in 1 hour
+      expiresIn: "1h",
     });
-
-    // Return the token in the response
     res.json({ token });
   } catch (err) {
-    // Log the error and return a 500 Internal Server Error
-    console.error(err); // Optional: log the error for debugging purposes
+    console.error(err); // Log the error for debugging
     res.status(500).json({ error: "Internal server error" });
   }
 });
