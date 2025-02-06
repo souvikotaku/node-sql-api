@@ -83,22 +83,33 @@ app.post("/api/users", async (req, res) => {
 app.post("/api/login", async (req, res) => {
   try {
     const { email, password } = req.body;
+
+    // Check if email and password are provided
+    if (!email || !password) {
+      return res
+        .status(400)
+        .json({ message: "Email and password are required" });
+    }
+
     const user = await pool.query("SELECT * FROM users WHERE email = $1", [
       email,
     ]);
-    if (user.rows.length === 0)
+    if (user.rows.length === 0) {
       return res.status(400).json({ message: "User not found" });
+    }
 
     const validPassword = await bcrypt.compare(password, user.rows[0].password);
-    if (!validPassword)
+    if (!validPassword) {
       return res.status(400).json({ message: "Invalid credentials" });
+    }
 
     const token = jwt.sign({ id: user.rows[0].id }, process.env.JWT_SECRET, {
       expiresIn: "1h",
     });
     res.json({ token });
   } catch (err) {
-    res.status(400).json({ error: err.message });
+    console.error(err); // Log the actual error for debugging purposes
+    res.status(500).json({ error: "Internal server error" });
   }
 });
 
