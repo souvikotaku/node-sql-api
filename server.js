@@ -35,7 +35,6 @@ const createTables = async () => {
     await pool.query(`
       CREATE TABLE IF NOT EXISTS users (
         id SERIAL PRIMARY KEY,
-        name VARCHAR(100),
         email VARCHAR(100) UNIQUE,
         password VARCHAR(255)
       );
@@ -68,11 +67,11 @@ app.get("/api/users", async (req, res) => {
 // POST API to add a user
 app.post("/api/users", async (req, res) => {
   try {
-    const { name, email, password } = req.body;
+    const { email, password } = req.body;
     const hashedPassword = await bcrypt.hash(password, 10);
     const result = await pool.query(
-      "INSERT INTO users (name, email, password) VALUES ($1, $2, $3) RETURNING *",
-      [name, email, hashedPassword]
+      "INSERT INTO users (email, password) VALUES ($1, $2) RETURNING *",
+      [email, hashedPassword]
     );
     res.status(201).json(result.rows[0]);
   } catch (error) {
